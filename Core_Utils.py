@@ -204,6 +204,13 @@ class WordDataset(Dataset):
         return torch.tensor(input_sequence).to(self.device), torch.tensor(output_sequence).to(self.device)
 
 def collate_fn(batch,pad_token_id,device):
+
+    """
+    The method to collate on a batch of data, by adding padding based on the longest string in the batch.
+
+    Hence, there is no need to compute a globally longest string and use that size.
+    
+    """
     
     input_words, target_words = zip(*batch)
     
