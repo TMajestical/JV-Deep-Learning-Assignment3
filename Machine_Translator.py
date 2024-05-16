@@ -4,9 +4,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import pandas as pd
 import random
+from torch import optim
+import wandb
 
 from Encoder_Decoder_Architecture import *
+
+from tqdm import tqdm
 
 seed = 23
 np.random.seed(seed)
@@ -186,7 +191,7 @@ class MachineTranslator:
             if wandb_logging:
                 wandb.log({'epoch': epoch+1,'train loss': train_loss, 'train accuracy': train_accuracy, 'Validation loss': val_loss, 'Validation accuracy': val_accuracy})
 
-    def compute_accuracy(self,dataloader,encoder,decoder,criterion,ignore_padding = True,device='cpu'):
+    def compute_accuracy(self,dataloader,encoder,decoder,criterion,ignore_padding = True,device='cpu',save_results=False,filename=""):
 
         """
         Method to compute the accuracy using the model (encoder-decoder) using dataloader.
@@ -205,7 +210,11 @@ class MachineTranslator:
             ignore_padding : If True, then in word level accuracy, the padding characters are ignored in computing the word level accuracy.
                             char level accuracy, the padding characters are not considered at all.
 
-                            If false, padding is considered to be a part of the word (for word level accuracy) and 
+                            If false, padding is considered to be a part of the word (for word level accuracy) and the entire word is checked.
+            device : Default CPU.
+            save_results : Default is False. If true, the results of predictions are saved to a CSV, named by the next param.
+            filename : The name of the file, if results have to be saved.
+
         """
 
         char_lvl_accuracy = 0
@@ -218,6 +227,9 @@ class MachineTranslator:
         tot_correct_word_preds = 0
 
         loss = 0
+
+        if save_results:
+            rows = []
 
         #criterion = loss_criterion.to(device)
 
@@ -279,6 +291,11 @@ class MachineTranslator:
         
                     tot_correct_char_preds += (torch.logical_and(multi_step_pred_correctness,complement_mask).int().sum()).item()
                     tot_chars += num_non_pad_chars
+
+                    if save_results:
+                        word_preds_correctness = torch.all(torch.logical_or(multi_step_pred_correctness,mask),dim=1).int()
+                        for i in range(multi_step_preds.shape[0]):
+                            rows.append([dataloader.dataset.lp.decode_word(input_tensor[i].cpu().numpy(),lang_id=0),dataloader.dataset.lp.decode_word(target_tensor[i].cpu().numpy(),lang_id=1),dataloader.dataset.lp.decode_word(multi_step_preds[i].cpu().numpy(),lang_id=1),word_preds_correctness[i].cpu().item()])
                     
             
                 else: ##otherwise.
@@ -293,6 +310,10 @@ class MachineTranslator:
             word_lvl_accuracy = round(tot_correct_word_preds*100/tot_words,2)
 
             loss /= dataloader.dataset.data.shape[0]
+
+            if save_results:
+                df = pd.DataFrame(data=rows, columns=["Source Word","Target Word","Predicted Word","Is Prediction Correct"])
+                df.to_csv(filename+".csv",index=False)
 
             if train:
 
