@@ -8,6 +8,14 @@ import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 
+seed = 23
+
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.backends.cudnn.deterministic = True
+
 class LanguageProcessor:
 
     def __init__(self,language_directory,target_lang_name,mode="train",meta_tokens=True):
