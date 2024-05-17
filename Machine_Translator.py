@@ -259,8 +259,7 @@ class MachineTranslator:
         
                 encoder_hidden_contexts, encoder_last_hidden, encoder_cell = encoder(input_tensor,encoder_hidden,encoder_cell)
                 ## even though we are passing target tensor, the teacher forcing ratio is 0, so no teacher forcing
-                decoder_outputs, _, _ = decoder(encoder_hidden_contexts, encoder_last_hidden,encoder_cell, target_tensor = target_tensor,teacher_forcing_ratio = 0)
-        
+                decoder_outputs, _, attentions = decoder(encoder_hidden_contexts, encoder_last_hidden,encoder_cell, target_tensor = target_tensor,teacher_forcing_ratio = 0)
                 loss += criterion(decoder_outputs.view(-1, decoder_outputs.size(-1)), target_tensor.view(-1)).item()
         
                 ## For a batch, for each character find the most probable output word.

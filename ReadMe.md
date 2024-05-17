@@ -133,6 +133,13 @@ Codes In the Repo:
         1. To find words that attention based model got right, but the vanilla model didn't
         2. To plot attention heatmaps.
 
+Main Code (Submission) Files:
+
+    Core_Utils.py
+    Encoder_Decoder_Architecture.py
+    Machine_Translator.py
+    train_vanilla.py
+    train_attention.py
 
 Design choices:
 

@@ -75,7 +75,7 @@ class Encoder(nn.Module):
 
         self.num_layers = num_layers
         self.hidden_size = hidden_size
-        self.embedding_size = embedding_size
+        self.embedding_size = self.hidden_size
         self.rnn_type = rnn_type
 
         self.D = 1 ##the number of directions in which the input is viewed.
@@ -90,11 +90,11 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(source_vocab_size, self.embedding_size,padding_idx = padding_idx)
         
         if self.rnn_type == "GRU":
-            self.rnn = nn.GRU(self.embedding_size, hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
+            self.rnn = nn.GRU(self.embedding_size, self.hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
         elif self.rnn_type == "RNN":
-            self.rnn = nn.RNN(self.embedding_size, hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
+            self.rnn = nn.RNN(self.embedding_size, self.hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
         elif self.rnn_type == "LSTM":
-            self.rnn = nn.LSTM(self.embedding_size, hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
+            self.rnn = nn.LSTM(self.embedding_size, self.hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
         
         self.dropout = nn.Dropout(dropout)
 
@@ -161,7 +161,7 @@ class Decoder(nn.Module):
         self.device = device
         self.D = 1 ##the number of directions in which the input is viewed.
         self.hidden_size = hidden_size
-        self.embedding_size = embedding_size
+        self.embedding_size = self.hidden_size
         self.use_attention = use_attention
         if bidirectional:
             self.D = 2
@@ -170,15 +170,17 @@ class Decoder(nn.Module):
         self.expected_h0_dim1 = self.D*self.num_layers
 
         ##create an embedding layer, and ignore padding index
-        self.embedding = nn.Embedding(target_vocab_size, self.embedding_size,padding_idx = padding_idx)
+        if self.use_attention:
+            factor = self.D
+        else:
+            factor = 1
+        self.embedding = nn.Embedding(target_vocab_size, self.embedding_size*factor,padding_idx = padding_idx)
 
         if self.use_attention:
-            self.attention = BahdanauAttention(hidden_size,self.D,self.expected_h0_dim1,batch_size)
-            recurrent_unit_input_dim = self.embedding_size + self.D*hidden_size
-
+            self.attention = BahdanauAttention(self.hidden_size,self.D,self.expected_h0_dim1,batch_size)
+            recurrent_unit_input_dim = 2*self.D*self.hidden_size
         else:
             recurrent_unit_input_dim = self.embedding_size
-
 
         self.rnn_dropout = 0
         if self.num_layers>1:
@@ -186,11 +188,11 @@ class Decoder(nn.Module):
 
         #self.gru = nn.GRU(hidden_size, hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional)
         if self.rnn_type == "GRU":
-            self.rnn = nn.GRU(recurrent_unit_input_dim, hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
+            self.rnn = nn.GRU(recurrent_unit_input_dim, self.hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
         elif self.rnn_type == "RNN":
-            self.rnn = nn.RNN(recurrent_unit_input_dim, hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
+            self.rnn = nn.RNN(recurrent_unit_input_dim, self.hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
         elif self.rnn_type == "LSTM":
-            self.rnn = nn.LSTM(recurrent_unit_input_dim, hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
+            self.rnn = nn.LSTM(recurrent_unit_input_dim, self.hidden_size, batch_first=True,num_layers = num_layers,bidirectional = bidirectional,dropout=self.rnn_dropout)
 
         ## Passing the hidden state through a fully conencted layer and then applying softmax
         self.output_layer = nn.Linear(self.hidden_size*self.D, target_vocab_size)
@@ -239,7 +241,6 @@ class Decoder(nn.Module):
                 decoder_input = decoder_input.view(1,-1)
 
             embedding = self.embedding(decoder_input)
-
 
             if decoder_hidden.shape[0] != self.expected_h0_dim1:
                 reshaped_hidden = decoder_hidden.repeat(self.expected_h0_dim1,1,1)
@@ -290,4 +291,4 @@ class Decoder(nn.Module):
         decoder_outputs = F.log_softmax(decoder_outputs, dim=-1)
 
         ## the idea is to have a common API for both attention and normal decoder, achiveing ease of use.
-        return decoder_outputs, decoder_hidden, attentions
+        return decoder_outputs, decoder_hidden,attentions

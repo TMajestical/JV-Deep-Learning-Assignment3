@@ -136,7 +136,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-b", "--batch_size", type=int, default=64,help="Batch size used to train neural network.")
 
-parser.add_argument("-bid", "--bidirectional", type=bool,default=False,choices=[True,False],help="If True, input would be seen in both directions.")
+parser.add_argument("-bid", "--bidirectional", type=bool,default=True,choices=[True,False],help="If True, input would be seen in both directions.")
 
 parser.add_argument("-dpt", "--dropout", type=float, default=0.4,help="The dropout probability.")
 

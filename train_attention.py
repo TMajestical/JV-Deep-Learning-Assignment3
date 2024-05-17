@@ -97,6 +97,7 @@ def setup_and_start_expt(config,wandb_log = False):
     valid_dataset = WordDataset(valid_lp,device=device)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size,collate_fn=collate_fn_ptr, shuffle=True)
     
+    
     ##in principle these are all fixed across train/test/valid data
      
     source_vocab_size = len(list(train_lp.source_char2id.keys()))
