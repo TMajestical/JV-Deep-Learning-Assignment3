@@ -14,6 +14,9 @@ Dependencies:
     pytorch: 2.2.2
     matplotlib: 3.7.2
 
+** Please note that the directory with the codes must also have the directory structure aksharantar_sampled/tel/
+** The codes have been written with focus on Telugu, however, the work pretty fine with any other language. To change the language, go to the method setup_and_start_expt(...) in train_attention.py or train_vanilla.py and set target_lang to the appropriate language code, for example "hin" for Hindi, etc.
+
 Codes In the Repo:
 
     JV CS23M036 DL PA3.ipynb
@@ -124,6 +127,11 @@ Codes In the Repo:
         -w_d,   --weight_decay	        1e-5	          Weight decay used by optimizers.
 
         -d      --device                None              The device on which the training happens. [When None, the code automatically detects and uses cuda:0 gpu, if available]
+
+    The Notebook studying_attention.ipynb, was used to study working of attention :
+
+        1. To find words that attention based model got right, but the vanilla model didn't
+        2. To plot attention heatmaps.
 
 
 Design choices:
